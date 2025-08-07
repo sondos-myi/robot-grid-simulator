@@ -61,6 +61,29 @@ python3 robot_simulator.py
 3. **Boundary Checking**: Prevents movement outside grid limits
 4. **Command Parsing**: Robust input handling with error recovery
 
+### Optional Enhancements
+
+1. **Battery Simulation**: 
+   - Movement costs 5% battery
+   - Turning costs 2% battery
+   - Diagonal movement costs 7.5% battery
+   - Actions fail when battery is insufficient
+
+2. **Diagonal Movement**:
+   - Supports northeast, northwest, southeast, southwest
+   - Higher battery cost than regular movement
+   - Respects boundaries and obstacles
+
+3. **Obstacle System**:
+   - Add/remove obstacles dynamically
+   - Prevents movement through obstacles
+   - Visual representation with 'X' markers
+
+4. **Grid Expansion**:
+   - Increase grid size during simulation
+   - Maintains robot position and obstacles
+   - Useful for larger exploration scenarios
+
 
 ## Code Structure
 
@@ -75,6 +98,10 @@ robot_simulator.py
 │   ├── right() - Turn right
 │   ├── report() - Display status
 │   ├── diagonal_move() - Diagonal movement
+│   ├── add_obstacle() - Add obstacle
+│   ├── remove_obstacle() - Remove obstacle
+│   ├── expand_grid() - Expand grid size
+│   └── display_grid() - Visual grid display
 └── main() - Command loop and user interface
 ```
 

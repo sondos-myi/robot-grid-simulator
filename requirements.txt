@@ -1,0 +1,5 @@
+# Robot Grid Simulator Requirements
+# Current implementation uses only standard library
+
+# Core Python requirements
+# No external dependencies currently needed

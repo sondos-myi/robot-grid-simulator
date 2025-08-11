@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Grid Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .grid-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .controls {
+            flex: 1;
+            min-width: 300px;
+        }
+        .grid {
+            display: grid;
+            gap: 2px;
+            background-color: #ddd;
+            border: 2px solid #333;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            aspect-ratio: 1;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+        }
+        .cell.robot {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .cell.obstacle {
+            background-color: #f44336;
+        }
+        .status {
+            background-color: #e0f7fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .controls button:hover {
+            background-color: #0b7dda;
+        }
+        .controls button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .controls .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .controls h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .controls input, .controls select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .message.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .message.error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .battery-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .battery-level {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Robot Grid Simulator</h1>
+    
+    <div class="container">
+        <div class="grid-container">
+            <div class="status">
+                <h2>Robot Status</h2>
+                <p>Position: <span id="position">(0, 0)</span></p>
+                <p>Direction: <span id="direction">NORTH</span></p>
+                <p>Battery: <span id="battery">100</span>%</p>
+                <div class="battery-bar">
+                    <div class="battery-level" id="battery-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div id="grid" class="grid"></div>
+            
+            <div id="message-container"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="section">
+                <h3>Movement Controls</h3>
+                <button id="forward-btn">Forward</button>
+                <button id="left-btn">Left</button>
+                <button id="right-btn">Right</button>
+                <button id="report-btn">Report</button>
+            </div>
+            
+            <div class="section">
+                <h3>Diagonal Movement</h3>
+                <select id="diagonal-direction">
+                    <option value="northeast">Northeast</option>
+                    <option value="northwest">Northwest</option>
+                    <option value="southeast">Southeast</option>
+                    <option value="southwest">Southwest</option>
+                </select>
+                <button id="diagonal-btn">Move Diagonally</button>
+            </div>
+            
+            <div class="section">
+                <h3>Obstacle Management</h3>
+                <div>
+                    <label>X Coordinate: <input type="number" id="obstacle-x" min="0"></label>
+                    <label>Y Coordinate: <input type="number" id="obstacle-y" min="0"></label>
+                </div>
+                <button id="add-obstacle-btn">Add Obstacle</button>
+                <button id="remove-obstacle-btn">Remove Obstacle</button>
+            </div>
+            
+            <div class="section">
+                <h3>Grid Management</h3>
+                <label>New Grid Size: <input type="number" id="grid-size" min="5"></label>
+                <button id="expand-grid-btn">Expand Grid</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the grid
+            let gridSize = 5;
+            const grid = document.getElementById('grid');
+            
+            function updateGrid() {
+                grid.innerHTML = '';
+                grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                
+                for (let y = gridSize - 1; y >= 0; y--) {
+                    for (let x = 0; x < gridSize; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        grid.appendChild(cell);
+                    }
+                }
+            }
+            
+            updateGrid();
+            
+            // Function to send commands to the server
+            function sendCommand(command, args = []) {
+                fetch('/command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command, args })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                    
+                    if (data.state) {
+                        updateUI(data.state);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error communicating with server: ' + error.message, 'error');
+                });
+            }
+            
+            // Function to update the UI based on robot state
+            function updateUI(state) {
+                // Update status
+                document.getElementById('position').textContent = `(${state.position[0]}, ${state.position[1]})`;
+                document.getElementById('direction').textContent = state.direction;
+                document.getElementById('battery').textContent = state.battery;
+                document.getElementById('battery-bar').style.width = `${state.battery}%`;
+                
+                // Update grid size if changed
+                if (state.grid_size !== gridSize) {
+                    gridSize = state.grid_size;
+                    updateGrid();
+                }
+                
+                // Clear all cells
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('robot', 'obstacle');
+                    cell.textContent = '';
+                });
+                
+                // Place robot
+                const robotCell = document.querySelector(`.cell[data-x="${state.position[0]}"][data-y="${state.position[1]}"]`);
+                if (robotCell) {
+                    robotCell.classList.add('robot');
+                    
+                    // Add direction arrow
+                    const arrows = {
+                        'NORTH': '↑',
+                        'EAST': '→',
+                        'SOUTH': '↓',
+                        'WEST': '←'
+                    };
+                    robotCell.textContent = arrows[state.direction] || '';
+                }
+                
+                // Place obstacles
+                state.obstacles.forEach(([x, y]) => {
+                    const obstacleCell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+                    if (obstacleCell) {
+                        obstacleCell.classList.add('obstacle');
+                        obstacleCell.textContent = 'X';
+                    }
+                });
+            }
+            
+            // Function to show messages
+            function showMessage(message, type) {
+                const container = document.getElementById('message-container');
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${type}`;
+                messageElement.textContent = message;
+                
+                container.innerHTML = '';
+                container.appendChild(messageElement);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 3000);
+            }
+            
+            // Add event listeners for controls
+            document.getElementById('forward-btn').addEventListener('click', () => sendCommand('forward'));
+            document.getElementById('left-btn').addEventListener('click', () => sendCommand('left'));
+            document.getElementById('right-btn').addEventListener('click', () => sendCommand('right'));
+            document.getElementById('report-btn').addEventListener('click', () => sendCommand('report'));
+            
+            document.getElementById('diagonal-btn').addEventListener('click', () => {
+                const direction = document.getElementById('diagonal-direction').value;
+                sendCommand('diagonal', [direction]);
+            });
+            
+            document.getElementById('add-obstacle-btn').addEventListener('click', () => {
+                const x = document.getElementById('obstacle-x').value;
+                const y = document.getElementById('obstacle-y').value;
+                if (x !== '' && y !== '') {
+                    sendCommand('add_obstacle', [x, y]);
+                    document.getElementById('obstacle-x').value = '';
+                    document.getElementById('obstacle-y').value = '';
+                } else {
+                    showMessage('Please enter both X and Y coordinates', 'error');
+                }
+            });
+            
+            document.getElementById('remove-obstacle-btn').addEventListener('click', () => {
+                const x = document.getElementById('obstacle-x').value;
+                const y = document.getElementById('obstacle-y').value;
+                if (x !== '' && y !== '') {
+                    sendCommand('remove_obstacle', [x, y]);
+                    document.getElementById('obstacle-x').value = '';
+                    document.getElementById('obstacle-y').value = '';
+                } else {
+                    showMessage('Please enter both X and Y coordinates', 'error');
+                }
+            });
+            
+            document.getElementById('expand-grid-btn').addEventListener('click', () => {
+                const size = document.getElementById('grid-size').value;
+                if (size && parseInt(size) >= gridSize) {
+                    sendCommand('expand', [size]);
+                    document.getElementById('grid-size').value = '';
+                } else {
+                    showMessage(`Please enter a size larger than current grid (${gridSize})`, 'error');
+                }
+            });
+            
+            // Get initial state
+            sendCommand('report');
+        });
+    </script>
+</body>
+</html>

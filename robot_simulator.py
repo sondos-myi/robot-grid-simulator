@@ -234,7 +234,88 @@ class RobotSimulator:
         self.position = next_position
         self._consume_battery(int(self.movement_cost * 1.5))
         return True
+    def add_obstacle(self, position: Tuple[int, int]) -> bool:
+        """
+        Add an obstacle to the grid (optional enhancement).
+        
+        Args:
+            position (Tuple[int, int]): Position to add obstacle
+            
+        Returns:
+            bool: True if obstacle added successfully, False otherwise
+        """
+        if not self._is_valid_position(position):
+            print("ERROR: Invalid position for obstacle!")
+            return False
+        
+        if position == self.position:
+            print("ERROR: Cannot place obstacle on robot position!")
+            return False
+        
+        self.obstacles.add(position)
+        return True
     
+    def remove_obstacle(self, position: Tuple[int, int]) -> bool:
+        """
+        Remove an obstacle from the grid (optional enhancement).
+        
+        Args:
+            position (Tuple[int, int]): Position to remove obstacle
+            
+        Returns:
+            bool: True if obstacle removed successfully, False otherwise
+        """
+        if position in self.obstacles:
+            self.obstacles.remove(position)
+            return True
+        else:
+            print("ERROR: No obstacle at specified position!")
+            return False
+    
+    def expand_grid(self, new_size: int) -> bool:
+        """
+        Expand the grid size (optional enhancement).
+        
+        Args:
+            new_size (int): New grid size
+            
+        Returns:
+            bool: True if grid expanded successfully, False otherwise
+        """
+        if new_size <= self.grid_size:
+            print("ERROR: New grid size must be larger than current size!")
+            return False
+        
+        self.grid_size = new_size
+        return True
+    
+    def display_grid(self):
+        """
+        Display the current state of the grid with robot position and obstacles.
+        """
+        print("\n" + "=" * (self.grid_size * 3 + 1))
+        for y in range(self.grid_size - 1, -1, -1):
+            row = "|"
+            for x in range(self.grid_size):
+                if (x, y) == self.position:
+                    # Show robot with direction indicator
+                    direction_symbols = {
+                        Direction.NORTH: "↑",
+                        Direction.EAST: "→",
+                        Direction.SOUTH: "↓",
+                        Direction.WEST: "←"
+                    }
+                    row += f" {direction_symbols[self.direction]} |"
+                elif (x, y) in self.obstacles:
+                    row += " X |"
+                else:
+                    row += "   |"
+            print(row)
+            if y > 0:
+                print("-" * (self.grid_size * 3 + 1))
+        print("=" * (self.grid_size * 3 + 1))
+        print(f"Battery: {self.battery_level}%")
+        print()
 
 def parse_command(command: str) -> Tuple[str, List[str]]:
     """

@@ -10,26 +10,41 @@
 - **Basic Movement Commands**: forward, left, right, report
 - **Boundary Detection**: Prevents robot from moving outside grid boundaries
 - **Error Handling**: Comprehensive exception handling for invalid commands
-- **Enhancements**: Battery simulation, diagonal movement, obstacles, grid expansion
+- **Optional Enhancements**: Battery simulation, diagonal movement, obstacles, grid expansion
+- **Web Interface**: Flask-based web application for browser-based control
 
 ## Installation and Setup
 
 ### Prerequisites
 
 - Python 3.7 or higher
-- No additional dependencies required (uses only standard library)
+- Flask web framework
 
 ### Running the Simulator
 
 1. Clone or download the project files
 2. Navigate to the project directory
-3. Run the simulator:
-
-```bash
-python3 robot_simulator.py
-```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the web application:
+   ```bash
+   python app.py
+   ```
+5. Open your browser and go to: `http://localhost:5000`
 
 ## Usage Instructions
+
+### Web Interface
+- **Start the Flask app**: `python app.py`
+- **Access via browser**: Navigate to the displayed URL
+- **Interactive control**: Use the web interface to control the robot
+
+### Command Line Interface
+- **Direct execution**: `python robot_simulator.py`
+- **Run tests**: `python test_robot_simulator.py`
+- **View examples**: `python example_usage.py`
 
 ### Basic Commands
 
@@ -61,6 +76,34 @@ python3 robot_simulator.py
 3. **Boundary Checking**: Prevents movement outside grid limits
 4. **Command Parsing**: Robust input handling with error recovery
 
+### Optional Enhancements
+
+1. **Battery Simulation**: 
+   - Movement costs 5% battery
+   - Turning costs 2% battery
+   - Diagonal movement costs 7.5% battery
+   - Actions fail when battery is insufficient
+
+2. **Diagonal Movement**:
+   - Supports northeast, northwest, southeast, southwest
+   - Higher battery cost than regular movement
+   - Respects boundaries and obstacles
+
+3. **Obstacle System**:
+   - Add/remove obstacles dynamically
+   - Prevents movement through obstacles
+   - Visual representation with 'X' markers
+
+4. **Grid Expansion**:
+   - Increase grid size during simulation
+   - Maintains robot position and obstacles
+   - Useful for larger exploration scenarios
+
+5. **Web Interface**:
+   - Flask-based web application
+   - Browser-based robot control
+   - Real-time grid visualization
+   - Interactive command interface
 
 ## Code Structure
 
@@ -75,6 +118,13 @@ robot_simulator.py
 │   ├── right() - Turn right
 │   ├── report() - Display status
 │   ├── diagonal_move() - Diagonal movement
-└── main() - Command loop and user interface
+│   ├── add_obstacle() - Add obstacle
+│   ├── remove_obstacle() - Remove obstacle
+│   ├── expand_grid() - Expand grid size
+│   └── display_grid() - Visual grid display
+├── main() - Command loop and user interface
+└── Web Interface
+    ├── app.py - Flask application
+    └── templates/ - HTML templates
 ```
 
